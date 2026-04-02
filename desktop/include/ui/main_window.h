@@ -173,6 +173,7 @@ private slots:
     void saveBtnClicked();
     void openBtnClicked();
     void newBtnClicked();
+    void exitApp();
 
 private:
     void updateWindowTitle();
