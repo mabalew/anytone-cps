@@ -184,6 +184,7 @@ private:
     LoadingDialog *loading_dialog;
 
     QVector<Anytone::Channel*> channel_clipboard;
+    bool channel_clipboard_is_cut = false;
 
     QShortcut *channel_copy_shortcut = nullptr;
     QShortcut *channel_cut_shortcut = nullptr;

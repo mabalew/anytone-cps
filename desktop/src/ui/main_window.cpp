@@ -274,6 +274,10 @@ void MainWindow::copySelectedChannels(){
         if(index_list.indexOf(index.row()) == -1) index_list.append(index.row());
     }
 
+    // replace any existing clipboard contents
+    channel_clipboard.clear();
+    channel_clipboard_is_cut = false;
+
     for(int i : index_list){
         channel_clipboard.push_back(Anytone::Memory::channels.at(i));
     }
@@ -294,6 +298,10 @@ void MainWindow::cutSelectedChannels(){
         if(index_list.indexOf(index.row()) == -1) index_list.append(index.row());
     }
 
+    // replace any existing clipboard contents
+    channel_clipboard.clear();
+    channel_clipboard_is_cut = true;
+
     for(int i : index_list){
         channel_clipboard.push_back(Anytone::Memory::channels.at(i));
     }
@@ -311,9 +319,14 @@ void MainWindow::pasteSelectedChannels(){
     for(int i = 0; i < channel_clipboard.size(); i++){
         Anytone::Channel *ch = channel_clipboard.at(i);
         Anytone::Memory::channels.at(selected_row+i)->copy(ch);
-        ch->clear();
+
+        // clear channel when cutting
+        if(channel_clipboard_is_cut) {
+            ch->clear();    
+        }
     }
     channel_clipboard.clear();
+    channel_clipboard_is_cut = false;
     listChannels(false);
 }
 void MainWindow::deleteSelectedChannels(){
