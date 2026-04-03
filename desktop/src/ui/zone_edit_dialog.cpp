@@ -115,6 +115,7 @@ void ZoneEditDialog::updateChannelTables(){
     // ---------- Member channels ----------
     auto *memberModel = new QStandardItemModel(this);
     memberModel->setColumnCount(3);
+    memberModel->setHorizontalHeaderLabels(QStringList() << "Ch #" << "Ch Name" << "Rx");
 
     for (int i = 0; i < static_cast<int>(member_channels.size()); ++i) {
         const auto &ch = member_channels[i];
@@ -133,6 +134,7 @@ void ZoneEditDialog::updateChannelTables(){
     // ---------- Available channels ----------
     auto *channelModel = new QStandardItemModel(this);
     channelModel->setColumnCount(3);
+    channelModel->setHorizontalHeaderLabels(QStringList() << "Ch #" << "Ch Name" << "Rx");
 
     for (int i = 0; i < static_cast<int>(available_channels.size()); ++i) {
         const auto &ch = available_channels[i];
