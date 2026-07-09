@@ -367,6 +367,11 @@ void Device::writeDigitalContacts(){
         if(contact->radio_id > 0) contact_total++;
     }
 
+    if(contact_total == 0){
+        qDebug() << "WARN: No digital contacts to write, skipping digital contact write";
+        return;
+    }
+
     QVector<Anytone::DigitalContact*> sorted_contacts = Anytone::Memory::digital_contacts;
 
     std::stable_sort(sorted_contacts.begin(),
@@ -444,17 +449,18 @@ void Device::writeDigitalContacts(){
     // Write order data
     int last_block = -1;
     int last_addr = 0;
+    int order_data_modulo = int((order_data.size() / (0x10 * 100)));
     emit update1(1, 3, "Writing Digital Contacts");
     for(int idx = 0; idx < order_data.size(); idx+=0x10){
         int addr_mod = idx % k_OrderBlkLen;
         int block = int((idx - addr_mod) / k_OrderBlkLen);
-        
-        
+
+
         int addr = contact_order_addr + (block * k_OrderBlkStride) + addr_mod;
         QByteArray data = order_data.mid(idx, 0x10);
-        
+
         writeMemory(addr, data);
-        if(idx > 0 && int(idx / 0x10) % int((order_data.size() / (0x10 * 100))) == 0){
+        if(order_data_modulo > 0 && idx > 0 && int(idx / 0x10) % order_data_modulo == 0){
             emit update2(idx, order_data.size(), "Writing Order Data");
         }
     }
@@ -468,7 +474,7 @@ void Device::writeDigitalContacts(){
         int addr = contact_data_addr + (block * k_DcBlkStride) + addr_mod;
         QByteArray data = contact_data.mid(idx, 0x10);
         writeMemory(addr, data);
-        if(idx > 0 && int(idx / 0x10) % contact_data_modulo == 0){
+        if(contact_data_modulo > 0 && idx > 0 && int(idx / 0x10) % contact_data_modulo == 0){
             emit update2(idx, contact_data.size(), "Writing Digital Data");
         }
     }
