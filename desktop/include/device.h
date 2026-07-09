@@ -220,6 +220,10 @@ public:
     SerialDevice(){}
     ~SerialDevice(){}
     bool connect(QString portname, int baud = 921600) override {
+        if(port != nullptr){
+            if(port->isOpen()) port->close();
+            delete port;
+        }
         port = new QSerialPort();
         port->setPortName(portname);
         port->setBaudRate(baud);
@@ -241,8 +245,12 @@ public:
         port->write(QByteArray("PROGRAM"));
 
         QByteArray resp = readPort();
-        if(resp != QByteArray("QX\x06") && resp != QByteArray("\x00")){
-            qDebug() << "ERR: Unexpected response from device (" << resp << ")";
+        if(resp.size() == 0){
+            qDebug() << "ERR: No response to PROGRAM command";
+            return false;
+        }
+        if(resp != QByteArray("QX\x06") && resp != QByteArray("\x00", 1)){
+            qDebug() << "ERR: Unexpected response from device (" << resp.toHex(' ') << ")";
             return false;
         }
 
@@ -289,6 +297,8 @@ public:
 
             QByteArray resp = readPort();
             if(resp.size() < 24){
+                qDebug().nospace() << "WARN: Short/no response reading 0x" << Qt::hex << address
+                                   << " (" << Qt::dec << resp.size() << " bytes), aborting session";
                 is_alive = false;
                 return QByteArray();
             }
@@ -364,7 +374,7 @@ public:
         std::vector<QString> data = {radio_model, radio_version};
         return data;
     }
-    QSerialPort *port;
+    QSerialPort *port = nullptr;
 };
 
 class SerialWorker : public QObject, public QRunnable {

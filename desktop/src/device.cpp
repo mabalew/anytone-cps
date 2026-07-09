@@ -2939,7 +2939,8 @@ void SerialWorker::runSerial(){
         emit finished(DeviceStatus::STATUS_COM_ERROR);
     }
 
-    static_cast<SerialDevice*>(device)->port->close();
+    QSerialPort *port = static_cast<SerialDevice*>(device)->port;
+    if(port != nullptr && port->isOpen()) port->close();
 
     delete device;
     device = nullptr;
