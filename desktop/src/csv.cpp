@@ -645,8 +645,14 @@ void CsvList::parseScanListData(){
     }
 }
 void CsvList::parseTalkgroupData(){
+    int row = 0;
     for(QHash<QString, QString> ch_data : data_list){
         int idx = ch_data["No."].toInt() - 1;
+        row++;
+        if(idx < 0 || idx >= Anytone::Memory::talkgroups.size()){
+            qDebug() << "WARN: Invalid talkgroup index in CSV row" << row;
+            continue;
+        }
         Anytone::Talkgroup *tg = Anytone::Memory::talkgroups.at(idx);
 
         tg->dmr_id = ch_data["Radio ID"].toInt();
