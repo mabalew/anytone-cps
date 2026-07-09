@@ -97,6 +97,8 @@ bool CsvList::loadCsvFile(QString filepath, CsvList::ListType list_type){
 
     // --- Read and process headers ---
     QString header_str = tstream.readLine();
+    if (header_str.startsWith(QChar(0xFEFF)))
+        header_str.remove(0, 1);
     if (header_str.endsWith(','))
         header_str.chop(1);
 
@@ -111,7 +113,7 @@ bool CsvList::loadCsvFile(QString filepath, CsvList::ListType list_type){
     // --- Parse rows ---
     int index = 0;
     while (!tstream.atEnd()) {
-        if(index % int(item_count/100) == 0) update2(index, item_count, "Loading CSV File");
+        if(item_count > 100 && index % int(item_count/100) == 0) update2(index, item_count, "Loading CSV File");
         QStringList fields = tstream.readLine().split(csvComma);
         if (fields.size() < headers.size())
             continue;
@@ -493,8 +495,13 @@ void CsvList::parseDigitalContactData(){
     int i = 0;
     int data_size = data_list.size();
     for(QHash<QString, QString> data : data_list){
-        if(i % int(data_size/100) == 0) emit update2(i, data_size, "Importing Digital Contacts");
+        if(data_size > 100 && i % int(data_size/100) == 0) emit update2(i, data_size, "Importing Digital Contacts");
         int idx = data["No."].toInt() - 1;
+        if(idx < 0 || idx >= Anytone::Memory::digital_contacts.size()){
+            qDebug() << "WARN: Invalid digital contact index in CSV row" << (i + 1);
+            i++;
+            continue;
+        }
         Anytone::DigitalContact *dc = Anytone::Memory::digital_contacts.at(idx);
         dc->radio_id = data["Radio ID"].toInt();
         dc->callsign = data["Callsign"];

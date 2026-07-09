@@ -732,7 +732,7 @@ void Memory::loadDigitalContacts(QXmlStreamReader &xml){
         if(attributes.hasAttribute("items")) count = attributes.value("items").toInt();
         QXmlStreamReader::TokenType token = xml.readNext();
         if(token == QXmlStreamReader::StartElement && xml.name() == u"DigitalContact") {
-            if(index % int(count/100) == 0) Memory::instance().update2(index, count, "Loading Digital Contacts");
+            if(count > 100 && index % int(count/100) == 0) Memory::instance().update2(index, count, "Loading Digital Contacts");
             int idx = xml.attributes().value("id").toInt();
             DigitalContact *item = Memory::digital_contacts.at(idx);
             item->load(xml);
