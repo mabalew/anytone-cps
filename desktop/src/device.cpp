@@ -206,6 +206,11 @@ void Device::readDigitalContacts(){
     int k_DcBufSize = map->DigitalContactBufferLength;
 
     int contact_count = Int::fromBytes(readMemory(map->DigitalContactMeta, 0x10).mid(0, 4));
+    if(!is_alive) return;
+    if(contact_count <= 0 || contact_count > Anytone::Memory::digital_contacts.size()){
+        qDebug() << "WARN: Invalid digital contact count read from radio:" << contact_count << "- skipping digital contact read";
+        return;
+    }
     QByteArray contact_data;
     contact_data.reserve(k_DcBufSize * contact_count);
 

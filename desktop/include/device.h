@@ -341,8 +341,9 @@ public:
         port->write(writecmd);
         QByteArray resp = readPort();
 
-        if(resp.size() == 0 || (resp.size() > 0 && resp.at(0) != 0x6)){
-            qDebug() << "WARN: Last byte of response not 0x06.";
+        if(resp.size() == 0 || resp.at(0) != 0x6){
+            qDebug().nospace() << "WARN: Write not acknowledged at 0x" << Qt::hex << address
+                               << " resp=" << (resp.size() > 0 ? resp.toHex() : QByteArray("<timeout>"));
         }
 
         // if(static_cast<uint8_t>(resp.at(22)) != checksum){
