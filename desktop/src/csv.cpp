@@ -112,11 +112,14 @@ bool CsvList::loadCsvFile(QString filepath, CsvList::ListType list_type){
 
     // --- Parse rows ---
     int index = 0;
+    int skipped = 0;
     while (!tstream.atEnd()) {
         if(item_count > 100 && index % int(item_count/100) == 0) update2(index, item_count, "Loading CSV File");
         QStringList fields = tstream.readLine().split(csvComma);
-        if (fields.size() < headers.size())
+        if (fields.size() < headers.size()) {
+            skipped++;
             continue;
+        }
 
         QHash<QString, QString> row;
         row.reserve(headers.size());
@@ -132,6 +135,10 @@ bool CsvList::loadCsvFile(QString filepath, CsvList::ListType list_type){
         data_list.append(std::move(row));
         index++;
     }
+
+    qDebug().nospace() << "CSV: " << data_list.size() << " rows parsed, " << skipped
+                       << " skipped (header has " << headers.size() << " columns: "
+                       << headers.join("|") << ")";
 
     file.close();
 
