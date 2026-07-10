@@ -20,6 +20,7 @@ void Anytone::AnalogAddress::decode(QByteArray data){
 }
 
 void Anytone::AnalogAddress::decode_D878UVII(QByteArray data){
+    if(data.size() < 0x17) return;
     uint8_t number_len = data[0x7];
     number = data.mid(0x0, 0x5).toHex().mid(0, number_len).toInt();
     name = QString(data.mid(0x8, 0xf));
@@ -27,6 +28,7 @@ void Anytone::AnalogAddress::decode_D878UVII(QByteArray data){
 }
 
 void Anytone::AnalogAddress::decode_D890UV(QByteArray data){
+    if(data.size() < 0x26) return;
     uint8_t number_len = data[0x7];
     number = data.mid(0x0, 0x5).toHex().mid(0, number_len).toInt();
     name = QString(data.mid(0x8, 0x1e));

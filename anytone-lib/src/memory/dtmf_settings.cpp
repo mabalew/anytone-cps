@@ -2,9 +2,12 @@
 #include "memory/dtmf_settings.h"
 
 void Anytone::DTMFSettings::decode(QByteArray data_24c1000, QByteArray data_2500500){
-    self_id = hex_char.at(static_cast<uint8_t>(data_24c1000.at(0x86))) +
-            hex_char.at(static_cast<uint8_t>(data_24c1000.at(0x87))) +
-            hex_char.at(static_cast<uint8_t>(data_24c1000.at(0x88)));
+    self_id.clear();
+    for(int offset : {0x86, 0x87, 0x88}){
+        int c = static_cast<uint8_t>(data_24c1000.at(offset));
+        if(c >= hex_char.size()) break;
+        self_id += hex_char.at(c);
+    }
 
     interval_char = static_cast<uint8_t>(data_24c1000.at(0x80));
     group_code = static_cast<uint8_t>(data_24c1000.at(0x81));

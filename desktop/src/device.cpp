@@ -732,7 +732,7 @@ void Device::readAnalogAddress(){
     QVector<int> idx_list;
 
     for(uint8_t i : id_list){
-        if(i != 0xff){
+        if(i != 0xff && i < Anytone::Memory::analog_addresses.size()){
             idx_list.append(i);
         }
     }
@@ -1158,6 +1158,7 @@ void Device::readHotKeySettings(){
     Anytone::Hotkey *hotkey = Anytone::Memory::hotkey;
 
     for(int idx : state_info_id_list){
+        if(idx < 0 || idx >= hotkey->state_content_list.size()) continue;
         hotkey->state_content_list[idx] = QString(readMemory(0x25c0000 + (idx * 0x20), 0x20));
     }
     
@@ -1726,20 +1727,22 @@ void Device::readTone2Settings(){
     }
     for(int i = 0; i < tone2_decode_id_list.size(); i++){
         int idx = tone2_decode_id_list.at(i);
+        if(idx < 0 || idx >= Anytone::Memory::tone2_settings->decode_list.size()) continue;
         Anytone::Tone2DecodeItem *item = Anytone::Memory::tone2_settings->decode_list.at(idx);
         item->decode(data_24c2400.mid(idx*0x20, 0x20));
     }
 
     std::vector<int> tone2_encode_id_list;
-    for (int i = 0; i < data_24c1280.size(); ++i) { 
+    for (int i = 0; i < data_24c1280.size(); ++i) {
         unsigned char byte = data_24c1280.at(i);
         for(int j = 0; j < 8; j++){
             if(!Bit::test(byte, j)) continue;
-            tone2_decode_id_list.push_back((i*8) + j);
+            tone2_encode_id_list.push_back((i*8) + j);
         }
     }
     for(int i = 0; i < tone2_encode_id_list.size(); i++){
         int idx = tone2_encode_id_list.at(i);
+        if(idx < 0 || idx >= Anytone::Memory::tone2_settings->encode_list.size()) continue;
         Anytone::Tone2EncodeItem *item = Anytone::Memory::tone2_settings->encode_list.at(idx);
         item->decode(data_24c1100.mid(idx*0x10, 0x10));
     }
