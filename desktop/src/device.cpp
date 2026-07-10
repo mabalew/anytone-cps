@@ -2051,7 +2051,7 @@ void Device::writeAprsSettings(){
         write_data[data_2501800_addr] = data_2501800;
     }
 
-    if(Anytone::Memory::radio_model != Anytone::RadioModel::D890UV_FW103) {
+    if(Anytone::Memory::radio_model == Anytone::RadioModel::D890UV_FW103) {
         int data_3501000_addr = 0x3501000;
         int data_3501300_addr = 0x3501300;
 
@@ -2315,7 +2315,7 @@ void Device::writeFMChannelData(){
                 
                 QByteArray kFmData(0x40, 0x0);
                 kFmData.replace(0, 4, QByteArray::fromHex(QString::number(fm->frequency).rightJustified(8, '0').toUtf8()));
-                kFmData.replace(0x4, 0x20, Format::wideCharString(fm->name).leftJustified(0x20, '\0'));
+                kFmData.replace(0x4, 0x20, Format::wideCharString(fm->name).leftJustified(0x20, '\0', true));
 
                 fm_freq_data.replace((i * 0x40), 0x40, kFmData);
             }
@@ -2327,7 +2327,7 @@ void Device::writeFMChannelData(){
                 QByteArray::fromHex(QString::number(vfo->frequency).rightJustified(8, '0').toUtf8())
             );
             
-            fm_data.replace(0x4, 0x20, Format::wideCharString(vfo->name).leftJustified(0x20, '\0'));
+            fm_data.replace(0x4, 0x20, Format::wideCharString(vfo->name).leftJustified(0x20, '\0', true));
         }else{
             fm_data.replace(0, 0x40, QByteArray(0x40, 0xff));
         }
@@ -2368,7 +2368,7 @@ void Device::writeHotKeySettings(){
         if(hotkey->state_content_list.at(i).isEmpty()) continue;
         int current_byte_idx = int((i - (i % 8))/8);
         Bit::set(&set_list_bytes[current_byte_idx], i%8);
-        write_data[0x25c0000 + (i * 0x20)] = hotkey->state_content_list.at(i).leftJustified('\x00').toUtf8();
+        write_data[0x25c0000 + (i * 0x20)] = hotkey->state_content_list.at(i).toUtf8().leftJustified(0x20, '\0', true);
     }
 
     
@@ -2496,11 +2496,11 @@ void Device::writeReceiveGroups(){
         if(rid->talkgroups.size() == 0) continue;
         int current_byte_idx = int((i - (i % 8))/8);
         Bit::set(&set_list_bytes[current_byte_idx], i%8);
-        write_data[data_addr + (i * map->RadioIdDataOffset)] = rid->encode();
+        write_data[data_addr + (i * map->ReceiveGroupDataOffset)] = rid->encode();
     }
 
     write_data[set_list_addr] = set_list;
-    
+
 }
 void Device::writeRoamingChannelData(){
     // TODO: Implement for D168UV
@@ -2835,9 +2835,9 @@ void Device::writeZoneData(){
             
             Bit::set(&zone_set_list_bytes[current_byte_idx], i%8);
             if(Anytone::Memory::radio_model == Anytone::RadioModel::D890UV_FW103){
-                write_data[zone_name_addr + (i * map->ZoneDataOffset)] = Format::wideCharString(zone->name).leftJustified(map->ZoneDataLength, '\0');
+                write_data[zone_name_addr + (i * map->ZoneDataOffset)] = Format::wideCharString(zone->name).leftJustified(map->ZoneDataLength, '\0', true);
             }else{
-                write_data[zone_name_addr + (i * map->ZoneDataOffset)] = zone->name.toUtf8().leftJustified(map->ZoneDataLength, '\0');
+                write_data[zone_name_addr + (i * map->ZoneDataOffset)] = zone->name.toUtf8().leftJustified(map->ZoneDataLength, '\0', true);
             }
 
             
@@ -2939,6 +2939,13 @@ void SerialWorker::runSerial(){
         emit finished(DeviceStatus::STATUS_SUCCESS);
         emit imageDataReady(device->image_data);
     }else{
+        // Best effort: try to end program mode anyway so the radio does not
+        // stay stuck on the PC READ/PC WRITE screen after a failed session.
+        SerialDevice *sdev = static_cast<SerialDevice*>(device);
+        if(sdev->port != nullptr && sdev->port->isOpen()){
+            sdev->is_alive = true;
+            device->endProgMode();
+        }
         emit finished(DeviceStatus::STATUS_COM_ERROR);
     }
 

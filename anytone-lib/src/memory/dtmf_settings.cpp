@@ -142,9 +142,10 @@ void Anytone::DTMFSettings::decode(QByteArray data_24c1000, QByteArray data_2500
     }
 }
 void Anytone::DTMFSettings::encode(QByteArray &data_24c1000, QByteArray &data_2500500){
-    data_24c1000[0x86] = hex_char.indexOf(self_id.at(0));
-    data_24c1000[0x87] = hex_char.indexOf(self_id.at(1));
-    data_24c1000[0x88] = hex_char.indexOf(self_id.at(2));
+    QString sid = self_id.leftJustified(3, '0', true);
+    data_24c1000[0x86] = qMax(0, int(hex_char.indexOf(sid.at(0))));
+    data_24c1000[0x87] = qMax(0, int(hex_char.indexOf(sid.at(1))));
+    data_24c1000[0x88] = qMax(0, int(hex_char.indexOf(sid.at(2))));
     data_24c1000[0x80] = interval_char;
     data_24c1000[0x81] = group_code;
     data_24c1000[0x82] = decoding_response;

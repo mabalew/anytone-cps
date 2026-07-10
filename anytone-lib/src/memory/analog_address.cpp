@@ -52,11 +52,11 @@ QByteArray Anytone::AnalogAddress::encode_D878UVII(){
     QByteArray data(0x18, 0);
     QString num = QString::number(number);
     data.replace(0x0, 5, 
-        QByteArray::fromHex(num.leftJustified(10, '0').toUtf8())
+        QByteArray::fromHex(num.leftJustified(10, '0', true).toUtf8())
     );
     data[0x7] = num.size();
     data.replace(0x8, 0xf, 
-        name.toUtf8().leftJustified(0xf, '\0')
+        name.toUtf8().leftJustified(0xf, '\0', true)
     );
 
     return data;
@@ -65,11 +65,11 @@ QByteArray Anytone::AnalogAddress::encode_D890UV(){
     QByteArray data(0x40, 0);
     QString num = QString::number(number);
     data.replace(0x0, 5, 
-        QByteArray::fromHex(num.leftJustified(10, '0').toUtf8())
+        QByteArray::fromHex(num.leftJustified(10, '0', true).toUtf8())
     );
     data[0x7] = num.size();
     data.replace(0x8, 0x1e, 
-        Format::wideCharString(name).leftJustified(0x1e, '\0')
+        Format::wideCharString(name).leftJustified(0x1e, '\0', true)
     );
 
     return data;
