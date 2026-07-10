@@ -780,7 +780,11 @@ void Memory::linkZoneRef(){
         if(zone->temp_member_channels.size() > 0){
             for(QVector<QString> member : zone->temp_member_channels){
                 int ch_idx = channels_list.indexOf(member);
-                if(ch_idx < 0) continue;
+                if(ch_idx < 0){
+                    qDebug() << "WARN: Zone" << zone->name << "- no channel matches"
+                             << member.value(0) << member.value(1) << member.value(2);
+                    continue;
+                }
                 zone->channels.push_back(Memory::channels.at(ch_idx));
             }
         }
