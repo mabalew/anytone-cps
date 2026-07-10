@@ -2663,9 +2663,17 @@ void Device::writeTalkgroupData(){
     int tg_set_list_addr = map->TalkgroupSet;
     int tg_data_list_addr = map->TalkgroupData;
     int tg_order_data_addr = map->TalkgroupOrder;
+    int tg_index_addr = map->TalkgroupIndex;
     QByteArray tg_set_list_data(0x4e3, 0xff);
     auto* tg_set_list_bytes = reinterpret_cast<std::uint8_t*>(tg_set_list_data.data());
-    QByteArray tg_data;
+
+    // Talkgroup records live in banks of TalkgroupBankSize entries every
+    // TalkgroupBankStride bytes; each record sits at its list-index slot.
+    std::map<int, QByteArray> tg_banks;
+
+    // The radio builds its talk group list from the index table: one little
+    // endian uint32 per allocated talkgroup, terminated with 0xff bytes.
+    QByteArray tg_index_data;
 
     std::map<int, int> tg_order = {};
 
@@ -2674,8 +2682,16 @@ void Device::writeTalkgroupData(){
         int current_byte_idx = int((i - (i % 8))/8);
         if(tg->dmr_id > 0) {
             Bit::clear(&tg_set_list_bytes[current_byte_idx], i%8);
-            tg_data += tg->encode();
-            int ordered_dmr_id = tg->dmr_id;
+
+            int bank = i / map->TalkgroupBankSize;
+            int slot = i % map->TalkgroupBankSize;
+            QByteArray &bank_data = tg_banks[bank];
+            int slot_offset = slot * map->TalkgroupDataOffset;
+            if(bank_data.size() < slot_offset)
+                bank_data.append(QByteArray(slot_offset - bank_data.size(), 0xff));
+            bank_data.replace(slot_offset, map->TalkgroupDataOffset, tg->encode());
+
+            tg_index_data.append(Int::toBytes(i, 4));
 
             QByteArray dmr_bytes = QByteArray::fromHex(QString::number(tg->dmr_id).rightJustified(8, '0').toUtf8());
             int dmr_id_num = (Int::fromBytes(dmr_bytes, Endian::Big) << 1) + tg->call_type;
@@ -2683,9 +2699,10 @@ void Device::writeTalkgroupData(){
         }
     }
 
-    // Pad Talkgroup data
-    tg_data = tg_data.leftJustified(tg_data.size() + 0x10 - (tg_data.size() % 0x10), '\0');
     tg_set_list_data = tg_set_list_data.leftJustified(0x4f0, '\0');
+
+    // Terminate and pad the index table
+    tg_index_data.append(QByteArray(0x10, 0xff));
 
     // Talkgroup order data
     QByteArray tg_order_data;
@@ -2697,8 +2714,11 @@ void Device::writeTalkgroupData(){
     tg_order_data = tg_order_data.leftJustified(tg_order_data.size() + 0x10 - (tg_order_data.size() % 0x10), 0xff);
 
     write_data[tg_set_list_addr] = tg_set_list_data;
-    write_data[tg_data_list_addr] = tg_data;
+    for(auto const& [bank, bank_data] : tg_banks){
+        write_data[tg_data_list_addr + (bank * map->TalkgroupBankStride)] = bank_data;
+    }
     write_data[tg_order_data_addr] = tg_order_data;
+    if(tg_index_addr > 0) write_data[tg_index_addr] = tg_index_data;
 }
 void Device::writeTalkgroupWhitelist(){
     if(Anytone::Memory::radio_model != Anytone::RadioModel::D890UV_FW103){
