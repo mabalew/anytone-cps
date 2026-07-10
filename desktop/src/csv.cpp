@@ -566,40 +566,65 @@ void CsvList::parseRepeaterListData(){
         return Constants::CTCSS_CODE.indexOf(QString::number(f, 'f', 1));
     };
 
-    for(QHash<QString, QString> data : data_list){
-        if(!data["Modes"].contains("fm", Qt::CaseInsensitive)){
-            qDebug() << "Repeater" << data["Callsign"] << "skipped (no FM mode:" << data["Modes"] << ")";
-            skipped++;
-            continue;
-        }
-
+    auto nextFreeChannel = [&]() -> Anytone::Channel* {
         while(slot < Anytone::Memory::channels.size()
               && Anytone::Memory::channels.at(slot)->rx_frequency > 0) slot++;
         if(slot >= Anytone::Memory::channels.size()){
             qDebug() << "WARN: No free channel slots left, stopping repeater import";
-            break;
+            return nullptr;
+        }
+        return Anytone::Memory::channels.at(slot++);
+    };
+
+    for(QHash<QString, QString> data : data_list){
+        const bool is_fm = data["Modes"].contains("fm", Qt::CaseInsensitive);
+        const bool is_dmr = data["Modes"].contains("dmr", Qt::CaseInsensitive);
+
+        if(!is_fm && !is_dmr){
+            qDebug() << "Repeater" << data["Callsign"] << "skipped (unsupported modes:" << data["Modes"] << ")";
+            skipped++;
+            continue;
         }
 
-        Anytone::Channel *ch = Anytone::Memory::channels.at(slot);
-        ch->name = data["Callsign"];
-        ch->setFrequencyStr(data["TX Frequency"], data["RX Frequency"]);
-        ch->channel_type = 0;   // A-Analog
-        ch->band_width = 1;     // 25K
-        ch->tx_power = 2;       // High
+        if(is_fm){
+            Anytone::Channel *ch = nextFreeChannel();
+            if(!ch) break;
+            ch->name = data["Callsign"];
+            ch->setFrequencyStr(data["TX Frequency"], data["RX Frequency"]);
+            ch->channel_type = 0;   // A-Analog
+            ch->band_width = 0;     // 12.5K - Polish band plan channel raster
+            ch->tx_power = 2;       // High
 
-        int encode_tone = ctcssIndex(data["RX CTCSS"]);
-        if(encode_tone != -1){
-            ch->ctcss_dcs_encode = 1;
-            ch->ctcss_encode_tone = encode_tone;
-        }
-        int decode_tone = ctcssIndex(data["TX CTCSS"]);
-        if(decode_tone != -1){
-            ch->ctcss_dcs_decode = 1;
-            ch->ctcss_decode_tone = decode_tone;
+            int encode_tone = ctcssIndex(data["RX CTCSS"]);
+            if(encode_tone != -1){
+                ch->ctcss_dcs_encode = 1;
+                ch->ctcss_encode_tone = encode_tone;
+            }
+            int decode_tone = ctcssIndex(data["TX CTCSS"]);
+            if(decode_tone != -1){
+                ch->ctcss_dcs_decode = 1;
+                ch->ctcss_decode_tone = decode_tone;
+            }
+            imported++;
         }
 
-        slot++;
-        imported++;
+        if(is_dmr){
+            // The export carries no color code or slot; CC1 is the de facto
+            // standard (Brandmeister). Create one channel per time slot.
+            for(int ts = 1; ts <= 2; ts++){
+                Anytone::Channel *ch = nextFreeChannel();
+                if(!ch) break;
+                ch->name = data["Callsign"] + " TS" + QString::number(ts);
+                ch->setFrequencyStr(data["TX Frequency"], data["RX Frequency"]);
+                ch->channel_type = 1;   // D-Digital
+                ch->band_width = 0;     // 12.5K
+                ch->tx_power = 2;       // High
+                ch->rx_color_code_idx = 1;
+                ch->tx_color_code_idx = 1;
+                ch->time_slot = (ts == 2);
+            }
+            imported++;
+        }
     }
 
     qDebug().nospace() << "Repeater list: " << imported << " imported, " << skipped << " skipped";
