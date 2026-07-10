@@ -102,7 +102,13 @@ bool CsvList::loadCsvFile(QString filepath, CsvList::ListType list_type){
     if (header_str.endsWith(','))
         header_str.chop(1);
 
-    QStringList headers = header_str.split(csvComma);
+    // Tab-separated exports (e.g. przemienniki.net repeater lists)
+    const bool tab_separated = header_str.contains('\t');
+    auto splitLine = [&](const QString &line) -> QStringList {
+        return tab_separated ? line.split('\t') : line.split(csvComma);
+    };
+
+    QStringList headers = splitLine(header_str);
 
     // Strip quotes from headers once; trim stray whitespace
     // (e.g. the official zone export has a trailing space in "Zone Hide ")
@@ -135,7 +141,7 @@ bool CsvList::loadCsvFile(QString filepath, CsvList::ListType list_type){
     int skipped = 0;
     auto parseLine = [&](const QString &line){
         if(item_count > 100 && index % int(item_count/100) == 0) update2(index, item_count, "Loading CSV File");
-        QStringList fields = line.split(csvComma);
+        QStringList fields = splitLine(line);
         if (fields.size() < headers.size()) {
             skipped++;
             return;
@@ -176,7 +182,14 @@ bool CsvList::saveCsvFile(QString filepath, CsvList::ListType list_type){
 void CsvList::parseData(CsvList::ListType list_type){
     switch(list_type){
         case CsvList::ListType::Channel:
-            parseChannelData();
+            // Repeater directory export (przemienniki.net): no channel
+            // numbers, identified by its Callsign/Duplex columns.
+            if(!data_list.isEmpty() && data_list.first().contains("Callsign")
+                                    && data_list.first().contains("Duplex")){
+                parseRepeaterListData();
+            }else{
+                parseChannelData();
+            }
             break;
         case CsvList::ListType::DigitalContactList:
             parseDigitalContactData();
@@ -536,6 +549,60 @@ void CsvList::parseChannelData(){
         if(Constants::OFF_ON.indexOf(ch_data["APRS RX"]) != -1) 
             ch->aprs_rx = Constants::OFF_ON.indexOf(ch_data["APRS RX"]);
     }
+}
+void CsvList::parseRepeaterListData(){
+    // przemienniki.net export: Callsign, Modes, TX Frequency, TX CTCSS,
+    // RX Frequency, RX CTCSS, RX 1750, Duplex, Offset, Status, ...
+    // The repeater's TX is the radio's RX and vice versa; the repeater's
+    // RX CTCSS is the tone the radio must ENCODE to open it.
+    int slot = 0;
+    int imported = 0;
+    int skipped = 0;
+
+    auto ctcssIndex = [](const QString &v) -> int {
+        bool ok = false;
+        double f = v.toDouble(&ok);
+        if(!ok || f <= 0) return -1;
+        return Constants::CTCSS_CODE.indexOf(QString::number(f, 'f', 1));
+    };
+
+    for(QHash<QString, QString> data : data_list){
+        if(!data["Modes"].contains("fm", Qt::CaseInsensitive)){
+            qDebug() << "Repeater" << data["Callsign"] << "skipped (no FM mode:" << data["Modes"] << ")";
+            skipped++;
+            continue;
+        }
+
+        while(slot < Anytone::Memory::channels.size()
+              && Anytone::Memory::channels.at(slot)->rx_frequency > 0) slot++;
+        if(slot >= Anytone::Memory::channels.size()){
+            qDebug() << "WARN: No free channel slots left, stopping repeater import";
+            break;
+        }
+
+        Anytone::Channel *ch = Anytone::Memory::channels.at(slot);
+        ch->name = data["Callsign"];
+        ch->setFrequencyStr(data["TX Frequency"], data["RX Frequency"]);
+        ch->channel_type = 0;   // A-Analog
+        ch->band_width = 1;     // 25K
+        ch->tx_power = 2;       // High
+
+        int encode_tone = ctcssIndex(data["RX CTCSS"]);
+        if(encode_tone != -1){
+            ch->ctcss_dcs_encode = 1;
+            ch->ctcss_encode_tone = encode_tone;
+        }
+        int decode_tone = ctcssIndex(data["TX CTCSS"]);
+        if(decode_tone != -1){
+            ch->ctcss_dcs_decode = 1;
+            ch->ctcss_decode_tone = decode_tone;
+        }
+
+        slot++;
+        imported++;
+    }
+
+    qDebug().nospace() << "Repeater list: " << imported << " imported, " << skipped << " skipped";
 }
 void CsvList::parseDigitalContactData(){
     qDebug() << data_list.size();
