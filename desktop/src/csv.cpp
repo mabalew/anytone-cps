@@ -497,7 +497,18 @@ void CsvList::parseChannelData(){
         if(Constants::PTT_ID.indexOf(ch_data["PTT ID"]) != -1) 
             ch->ptt_id = Constants::PTT_ID.indexOf(ch_data["PTT ID"]);
             
-        ch->rx_color_code_idx = ch_data["RX Color Code"].toInt();
+        // Official CPS exports the DMR color code as "Color Code" and the
+        // time slot as "Slot" (1/2)
+        if(ch_data.contains("Color Code")){
+            ch->rx_color_code_idx = ch_data["Color Code"].toInt();
+            ch->tx_color_code_idx = ch_data["Color Code"].toInt();
+        }
+        if(ch_data.contains("RX Color Code"))
+            ch->rx_color_code_idx = ch_data["RX Color Code"].toInt();
+        if(ch_data.contains("Slot")){
+            int slot = ch_data["Slot"].toInt();
+            if(slot == 1 || slot == 2) ch->time_slot = (slot == 2);
+        }
         ch->temp_scan_list_name = ch_data["Scan List"];
         ch->temp_receive_group_name = ch_data["Receive Group List"];
 
