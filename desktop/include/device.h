@@ -74,6 +74,14 @@ public:
     void writeMemory(int address, QByteArray data){
         int idx = 0;
 
+        // Never emit a short frame: the radio expects exactly 16 data bytes
+        // per write command; a shorter payload desyncs the whole session.
+        if(data.size() % 0x10 != 0){
+            qDebug().nospace() << "WARN: Padding unaligned write of 0x" << Qt::hex << data.size()
+                               << " bytes at 0x" << address;
+            data.append(QByteArray(0x10 - (data.size() % 0x10), '\0'));
+        }
+
         for(int addr = address; addr < address + data.size(); addr += 0x10){
             writeMemoryAddress(addr, data.mid(idx * 0x10, 0x10));
             idx++;
