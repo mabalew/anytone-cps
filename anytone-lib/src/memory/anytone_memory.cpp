@@ -768,6 +768,8 @@ void Memory::linkZoneRef(){
     for (Zone* zone : zones) {
         if (!zone) continue;
 
+        zone->channels.clear();
+
         if(zone->temp_member_channel_idxs.size() > 0){
             for(uint16_t idx : zone->temp_member_channel_idxs){
                 if(idx >= Memory::channels.size()) continue;
@@ -839,6 +841,7 @@ void Memory::linkChannelRef(){
 }
 void Memory::linkScanListRef(){
     for(ScanList *sc : Memory::scanlists){
+        sc->channels.clear();
         for(int idx : sc->channel_member_idxs){
             if(idx < 0 || idx >= Memory::channels.size()) continue;
             sc->channels.push_back(Memory::channels.at(idx));
@@ -847,6 +850,7 @@ void Memory::linkScanListRef(){
 }
 void Memory::linkRoamingZoneRef(){
     for(RoamingZone *z : Memory::roaming_zones){
+        z->channels.clear();
         for(int idx : z->channel_idxs){
             if(idx < 0 || idx >= Memory::roaming_channels.size()) continue;
             z->channels.push_back(Memory::roaming_channels.at(idx));
@@ -862,6 +866,7 @@ void Memory::linkHotKeyRef(){
 }
 void Memory::linkReceiveGroupRef(){
     for(ReceiveGroup *z : Memory::receive_group_call_lists){
+        z->talkgroups.clear();
         for(int idx : z->tg_idxs){
             if(idx < 0 || idx >= Memory::talkgroups.size()) continue;
             z->talkgroups.push_back(Memory::talkgroups.at(idx));
@@ -870,6 +875,8 @@ void Memory::linkReceiveGroupRef(){
 }
 void Memory::linkAmZoneRef(){
     for(AmZone *zone : am_zones){
+        zone->member_channels.clear();
+        zone->scan_channels.clear();
         for(int idx : zone->member_channel_idxs){
             if(idx < 0 || idx >= am_air_list.size()) continue;
             zone->member_channels.append(am_air_list[idx]);

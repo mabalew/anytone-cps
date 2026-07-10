@@ -104,10 +104,12 @@ bool CsvList::loadCsvFile(QString filepath, CsvList::ListType list_type){
 
     QStringList headers = header_str.split(csvComma);
 
-    // Strip quotes from headers once
+    // Strip quotes from headers once; trim stray whitespace
+    // (e.g. the official zone export has a trailing space in "Zone Hide ")
     for (QString &h : headers) {
         if (h.size() >= 2 && h.front() == '"' && h.back() == '"')
             h = h.mid(1, h.size() - 2);
+        h = h.trimmed();
     }
 
     // Header-less contact databases (e.g. DMR user DB exports such as
@@ -447,8 +449,14 @@ void CsvList::parseAutoRepeaterOffsetFrequencies(){
     }
 }
 void CsvList::parseChannelData(){
+    int row = 0;
     for(QHash<QString, QString> ch_data : data_list){
         int idx = ch_data["No."].toInt() - 1;
+        row++;
+        if(idx < 0 || idx >= Anytone::Memory::channels.size()){
+            qDebug() << "WARN: Invalid channel index in CSV row" << row;
+            continue;
+        }
         Anytone::Channel *ch = Anytone::Memory::channels.at(idx);
         ch->name = ch_data["Channel Name"];
         ch->setFrequencyStr(ch_data["Receive Frequency"], ch_data["Transmit Frequency"]);
@@ -675,8 +683,14 @@ void CsvList::parseTone2Encode(){
     QHash<QString, QString> data = data_list.at(0);
 }
 void CsvList::parseZoneData(){
+    int row = 0;
     for(QHash<QString, QString> data : data_list){
         int idx = data["No."].toInt() - 1;
+        row++;
+        if(idx < 0 || idx >= Anytone::Memory::zones.size()){
+            qDebug() << "WARN: Invalid zone index in CSV row" << row;
+            continue;
+        }
         Anytone::Zone *zone = Anytone::Memory::zones.at(idx);
         zone->name = data["Zone Name"];
         zone->hide = data["Zone Hide"].toInt();
@@ -685,10 +699,19 @@ void CsvList::parseZoneData(){
         QStringList member_rx_freq = data["Zone Channel Member RX Frequency"].split("|");
         QStringList member_tx_freq = data["Zone Channel Member TX Frequency"].split("|");
 
+        if(member_names.size() != member_rx_freq.size() || member_names.size() != member_tx_freq.size()){
+            qDebug() << "WARN: Zone" << zone->name << "member/frequency count mismatch in CSV row" << row;
+        }
+        int member_count = qMin(member_names.size(), qMin(member_rx_freq.size(), member_tx_freq.size()));
+
         zone->temp_a_channel_name = {data["A Channel"], data["A Channel RX Frequency"], data["A Channel TX Frequency"]};
         zone->temp_b_channel_name = {data["B Channel"], data["B Channel RX Frequency"], data["B Channel TX Frequency"]};
 
-        for(int i = 0; i < member_names.size(); i++){
+        zone->temp_member_channels.clear();
+        zone->temp_member_channel_idxs.clear();
+        zone->channels.clear();
+
+        for(int i = 0; i < member_count; i++){
             QString name = member_names.at(i);
             QString rx_freq = member_rx_freq.at(i);
             QString tx_freq = member_tx_freq.at(i);
