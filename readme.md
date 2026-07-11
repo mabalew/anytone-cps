@@ -172,7 +172,7 @@ against a real radio; others were removed until tested.
 | HotKey State | R/W |
 | Master ID | R/W |
 | Optional Settings | R/W |
-| Prefabricated SMS | R |
+| Prefabricated SMS | R/W |
 | Radio IDs | R/W |
 | Receive Groups | R/W |
 | Roaming Channels | R/W |
