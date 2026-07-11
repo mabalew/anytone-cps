@@ -2418,13 +2418,12 @@ void Device::writeMasterRadioIdData(){
 void Device::writePrefabSms(){
     // TODO: Implement for D168UV
     //
-    // Writing the prefabricated SMS list is disabled: the link-list layout
-    // reconstructed from readPrefabricatedSms round-trips through this CPS but
-    // is NOT accepted by the real radio firmware (writing a populated list
-    // left the radio's SMS list empty). Leave the radio's SMS untouched until
-    // the on-radio format is confirmed from a dump of a keypad-created list.
-    // Do not write anything here, so an "Other Data" write never touches the
-    // SMS region.
+    // Writing the prefabricated SMS list is disabled. The addresses used by
+    // read/writePrefabSms (PrefabSmsSet 0x1640000 / PrefabSmsData 0x2140000)
+    // appear to be wrong for the D878UVII: after a write the radio's own menu
+    // shows no templates, yet reading back returns data - i.e. we read/write a
+    // region the firmware does not use for SMS templates. Leave the region
+    // untouched until the correct addresses/format are confirmed.
     return;
 }
 void Device::writeRadioIdData(){
