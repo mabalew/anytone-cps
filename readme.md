@@ -80,6 +80,31 @@ erased, zeroed and randomized codeplug images).
   D878UVII (and never on the D890UV), and receive groups used the radio-ID stride (0x20) instead
   of their own (0x200), overlapping the records.
 
+### Channel and zone imports
+- Wire up the **Channels** and **Zones** rows of the Import dialog (buttons were permanently
+  disabled). Channels are always imported before zones so zone members can be linked in the same
+  run; zones link their members to channels by name + RX/TX frequency.
+- Zone CSV fixes: trim header names (the official export ends with `"Zone Hide "` including a
+  trailing space, so the hide flag never parsed), bounds-check row numbers, tolerate member
+  name/frequency lists of different lengths, and make reference linking idempotent (a read
+  followed by an import used to duplicate zone/scan list/roaming members).
+- Zones whose channels did not link are still shown by name (with a 0 channel count) and every
+  unmatched member is logged, instead of rendering as blank rows.
+- Channel CSV: parse the **Color Code** and **Slot** columns of the official export; imported DMR
+  channels used to end up with color code 0 and slot 1 regardless of the file contents.
+
+### Repeater list import (przemienniki.net)
+- The Channels import field also accepts repeater directory exports from
+  [przemienniki.net](https://przemienniki.net) (comma- or tab-separated, auto-detected by the
+  `Callsign`/`Duplex` columns).
+- The repeater's TX/RX perspective is translated to the radio's (repeater TX = radio RX), and the
+  repeater's input CTCSS becomes the tone the radio encodes; `false` means no tone.
+- FM repeaters become analog channels (12.5K bandwidth, matching the IARU R1 12.5 kHz channel
+  raster); DMR repeaters become **two digital channels per repeater** (`<callsign> TS1`/`TS2`)
+  with color code 1, since the export carries no CC/slot information. Rows with neither FM nor
+  DMR modes are skipped with a log message.
+- Imported channels fill the first free channel slots.
+
 ---
 
 ## Progress
