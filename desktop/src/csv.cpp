@@ -19,6 +19,8 @@
 #include "memory/analog_address.h"
 #include "memory/fm.h"
 #include "memory/gps_roaming.h"
+#include "memory/roaming_channel.h"
+#include "memory/roaming_zone.h"
 #include "memory/prefabricated_sms.h"
 
 QMap<CsvList::ListType, QString> CsvList::loadFile(QString filepath){
@@ -556,8 +558,10 @@ void CsvList::parseRepeaterListData(){
     // The repeater's TX is the radio's RX and vice versa; the repeater's
     // RX CTCSS is the tone the radio must ENCODE to open it.
     int slot = 0;
+    int roaming_slot = 0;
     int imported = 0;
     int skipped = 0;
+    QVector<Anytone::RoamingChannel*> new_roaming_channels;
 
     auto ctcssIndex = [](const QString &v) -> int {
         bool ok = false;
@@ -623,7 +627,43 @@ void CsvList::parseRepeaterListData(){
                 ch->tx_color_code_idx = 1;
                 ch->time_slot = (ts == 2);
             }
+
+            // Roaming channel for the same repeater (used by the radio to
+            // hop between repeaters of the network while keeping the TG).
+            while(roaming_slot < Anytone::Memory::roaming_channels.size()
+                  && Anytone::Memory::roaming_channels.at(roaming_slot)->rx_frequency > 0) roaming_slot++;
+            if(roaming_slot < Anytone::Memory::roaming_channels.size()){
+                Anytone::RoamingChannel *rc = Anytone::Memory::roaming_channels.at(roaming_slot++);
+                rc->name = data["Callsign"];
+                rc->rx_frequency = qRound(data["TX Frequency"].toDouble() * 100000);
+                rc->tx_frequency = qRound(data["RX Frequency"].toDouble() * 100000);
+                rc->color_code = 1;
+                rc->slot = 0;   // Slot1
+                new_roaming_channels.append(rc);
+            }else{
+                qDebug() << "WARN: No free roaming channel slots for" << data["Callsign"];
+            }
+
             imported++;
+        }
+    }
+
+    // Group the new roaming channels into free roaming zones (max 64 each)
+    int zone_idx = 0;
+    int zone_no = 1;
+    while(!new_roaming_channels.isEmpty()){
+        while(zone_idx < Anytone::Memory::roaming_zones.size()
+              && Anytone::Memory::roaming_zones.at(zone_idx)->channels.size() > 0) zone_idx++;
+        if(zone_idx >= Anytone::Memory::roaming_zones.size()){
+            qDebug() << "WARN: No free roaming zones left";
+            break;
+        }
+        Anytone::RoamingZone *rz = Anytone::Memory::roaming_zones.at(zone_idx++);
+        rz->name = QString("Roaming %1").arg(zone_no++);
+        for(int i = 0; i < 64 && !new_roaming_channels.isEmpty(); i++){
+            Anytone::RoamingChannel *rc = new_roaming_channels.takeFirst();
+            rz->channels.append(rc);
+            rz->channel_idxs.append(rc->id);   // linkReferences rebuilds from these
         }
     }
 
