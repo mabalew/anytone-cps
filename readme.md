@@ -104,6 +104,9 @@ section) is also available separately on the `fix/digital-contacts-write` branch
   raster); DMR repeaters become **two digital channels per repeater** (`<callsign> TS1`/`TS2`)
   with color code 1, since the export carries no CC/slot information. Rows with neither FM nor
   DMR modes are skipped with a log message.
+- Each DMR repeater also gets a **roaming channel** (CC1, Slot1), grouped into `Roaming 1..N`
+  roaming zones (64 channels each, the codeplug limit), so network roaming works out of the box.
+  Also fixed the Roaming Channel view showing the TX frequency in the RX column.
 - Imported channels fill the first free channel slots.
 
 ---
