@@ -2435,19 +2435,20 @@ void Device::writePrefabSms(){
         if(sms->text.size() > 0) active_sms.push_back(sms);
     }
 
+    // Leave the radio's SMS untouched when there are none in memory (e.g. the
+    // list was never read/edited), instead of overwriting it with an empty
+    // list and wiping the messages already stored in the radio.
+    if(active_sms.empty()){
+        qDebug() << "No prefabricated SMS to write, leaving radio SMS untouched";
+        return;
+    }
+
     // Build the chain the reader walks: it starts at slot 0 and follows
     // byte[2] (next slot) until 0xff; byte[3] is the SMS id at that slot.
     for(int i = 0; i < (int)active_sms.size(); i++){
         QByteArray link_list_line(0x10, 0);
         link_list_line[0x3] = static_cast<char>(active_sms[i]->id);
         link_list_line[0x2] = static_cast<char>(i < (int)active_sms.size() - 1 ? i + 1 : 0xff);
-        link_list.append(link_list_line);
-    }
-    // With no SMS, slot 0 must terminate so the reader sees an empty list.
-    if(active_sms.empty()){
-        QByteArray link_list_line(0x10, 0);
-        link_list_line[0x3] = static_cast<char>(0xff);
-        link_list_line[0x2] = static_cast<char>(0xff);
         link_list.append(link_list_line);
     }
     write_data[link_list_addr] = link_list;
