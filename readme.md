@@ -22,9 +22,10 @@ Currently, this project is in Alpha stage and is a work is progress. Make sure y
 
 ## Changes in this fork
 
-All changes below live on the `fix/digital-contacts-write` branch and were verified against a real
-AnyTone AT-D878UVII (FW 4.00 / V101) and with a `VirtualDevice` test harness (write/read roundtrips on
-erased, zeroed and randomized codeplug images).
+All changes below live on this fork's `main` branch and were verified against a real AnyTone
+AT-D878UVII (FW 4.00 / V101) and with a `VirtualDevice` test harness (write/read roundtrips on
+erased, zeroed and randomized codeplug images). The initial bug fix set (up to the UI fixes
+section) is also available separately on the `fix/digital-contacts-write` branch.
 
 ### Talk groups
 - Write the talk group **index table at `0x2600000`** (one little-endian `uint32` per talk group,
