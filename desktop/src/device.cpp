@@ -2417,49 +2417,15 @@ void Device::writeMasterRadioIdData(){
 }
 void Device::writePrefabSms(){
     // TODO: Implement for D168UV
-
-    const auto* map = Anytone::Memory::Map();
-    if (!map) return;
-
-    if(verbose) qDebug() << "Writing Prefab SMS";
-    
-    int link_list_addr = map->PrefabSmsSet;
-    int data_addr = map->PrefabSmsData;
-    int data_stride = map->PrefabSmsDataOffset;
-    int dataBlockLen = map->PrefabSmsDataBlockSize;
-    int dataBlockStride = map->PrefabSmsDataBlockOffset;
-    QByteArray link_list;
-
-    std::vector<Anytone::PrefabricatedSms*> active_sms = {};
-    for(Anytone::PrefabricatedSms *sms : Anytone::Memory::prefabricated_sms_list){
-        if(sms->text.size() > 0) active_sms.push_back(sms);
-    }
-
-    // Leave the radio's SMS untouched when there are none in memory (e.g. the
-    // list was never read/edited), instead of overwriting it with an empty
-    // list and wiping the messages already stored in the radio.
-    if(active_sms.empty()){
-        qDebug() << "No prefabricated SMS to write, leaving radio SMS untouched";
-        return;
-    }
-
-    // Build the chain the reader walks: it starts at slot 0 and follows
-    // byte[2] (next slot) until 0xff; byte[3] is the SMS id at that slot.
-    for(int i = 0; i < (int)active_sms.size(); i++){
-        QByteArray link_list_line(0x10, 0);
-        link_list_line[0x3] = static_cast<char>(active_sms[i]->id);
-        link_list_line[0x2] = static_cast<char>(i < (int)active_sms.size() - 1 ? i + 1 : 0xff);
-        link_list.append(link_list_line);
-    }
-    write_data[link_list_addr] = link_list;
-
-    // SMS bodies are addressed by id, matching readPrefabricatedSms.
-    for(Anytone::PrefabricatedSms *sms : active_sms){
-        int byteOffset = sms->id * data_stride;
-        int block = byteOffset / dataBlockLen;
-        int addr = data_addr + (block * dataBlockStride) + (byteOffset % dataBlockLen);
-        write_data[addr] = sms->encodeData();
-    }
+    //
+    // Writing the prefabricated SMS list is disabled: the link-list layout
+    // reconstructed from readPrefabricatedSms round-trips through this CPS but
+    // is NOT accepted by the real radio firmware (writing a populated list
+    // left the radio's SMS list empty). Leave the radio's SMS untouched until
+    // the on-radio format is confirmed from a dump of a keypad-created list.
+    // Do not write anything here, so an "Other Data" write never touches the
+    // SMS region.
+    return;
 }
 void Device::writeRadioIdData(){
     // TODO: Implement for D168UV
