@@ -155,24 +155,15 @@ The stock CPS for the 878UVII:
 
 # Feature Set
 ## Serial Data
-These are not fully tested. `R/W` = read and write implemented; `R` = read only.
+`R/W` = read and write implemented; `R` = read only. Only the entries below have been exercised
+against a real radio; others were removed until tested.
 | Data | D878UVII |
 | - | :---: |
-| Boot Image | R/W |
-| BK Image 1 | R/W |
-| BK Image 2 | R/W |
-| 2Tone Encode/Decode | R/W |
-| 5Tone Encode/Decode | R/W |
-| AES Encryption Code | R/W |
 | Analog Address Book | R/W |
 | APRS | R/W |
-| ARC4 Encryption Code | R/W |
 | Auto Repeater Offset Frequencies | R/W |
-| Alarm Settings | R/W |
 | Channels | R/W |
 | Digital Contacts | R/W |
-| DTMF Encode/Decode | R/W |
-| Encryption Code | R/W |
 | Local Information/Expert Options(AT_OPTIONS) | R/W |
 | FM Channels | R/W |
 | GPS Roaming | R/W |
@@ -181,12 +172,11 @@ These are not fully tested. `R/W` = read and write implemented; `R` = read only.
 | HotKey State | R/W |
 | Master ID | R/W |
 | Optional Settings | R/W |
-| Prefabricated SMS | R |
+| Prefabricated SMS | R/W |
 | Radio IDs | R/W |
 | Receive Groups | R/W |
 | Roaming Channels | R/W |
 | Roaming Zones | R/W |
-| Scan Lists | R/W |
 | Talk Alias Settings | R/W |
 | TalkGroups | R/W |
 | Zones | R/W |

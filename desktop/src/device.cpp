@@ -2429,32 +2429,35 @@ void Device::writePrefabSms(){
     int dataBlockLen = map->PrefabSmsDataBlockSize;
     int dataBlockStride = map->PrefabSmsDataBlockOffset;
     QByteArray link_list;
-    std::vector<Anytone::PrefabricatedSms*> active_sms = {};
 
-    for(Anytone::PrefabricatedSms *sms : active_sms){
+    std::vector<Anytone::PrefabricatedSms*> active_sms = {};
+    for(Anytone::PrefabricatedSms *sms : Anytone::Memory::prefabricated_sms_list){
         if(sms->text.size() > 0) active_sms.push_back(sms);
     }
 
-    // Create Link List
-    for(int i = 0; i < active_sms.size(); i++){
+    // Build the chain the reader walks: it starts at slot 0 and follows
+    // byte[2] (next slot) until 0xff; byte[3] is the SMS id at that slot.
+    for(int i = 0; i < (int)active_sms.size(); i++){
         QByteArray link_list_line(0x10, 0);
-
-        link_list_line[0x3] = active_sms[i]->id;
-
-        if(i < active_sms.size() - 1){
-            link_list_line[0x2] = active_sms[i+1]->id;
-        }else{
-            link_list_line[0x2] = 0xff;
-        }
+        link_list_line[0x3] = static_cast<char>(active_sms[i]->id);
+        link_list_line[0x2] = static_cast<char>(i < (int)active_sms.size() - 1 ? i + 1 : 0xff);
         link_list.append(link_list_line);
     }
-    
-    for(int i = 0; i < active_sms.size(); i++){
-        Anytone::PrefabricatedSms *sms = active_sms.at(i);
-        int block = int(((i * data_stride) - i % dataBlockLen) / dataBlockLen);
-        int addr = data_addr + (block * dataBlockStride) + ((i * data_stride) % dataBlockLen);
-        QByteArray data = sms->encodeData();
-        write_data[addr] = data;
+    // With no SMS, slot 0 must terminate so the reader sees an empty list.
+    if(active_sms.empty()){
+        QByteArray link_list_line(0x10, 0);
+        link_list_line[0x3] = static_cast<char>(0xff);
+        link_list_line[0x2] = static_cast<char>(0xff);
+        link_list.append(link_list_line);
+    }
+    write_data[link_list_addr] = link_list;
+
+    // SMS bodies are addressed by id, matching readPrefabricatedSms.
+    for(Anytone::PrefabricatedSms *sms : active_sms){
+        int byteOffset = sms->id * data_stride;
+        int block = byteOffset / dataBlockLen;
+        int addr = data_addr + (block * dataBlockStride) + (byteOffset % dataBlockLen);
+        write_data[addr] = sms->encodeData();
     }
 }
 void Device::writeRadioIdData(){
