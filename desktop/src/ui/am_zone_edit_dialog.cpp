@@ -12,6 +12,7 @@ AmZoneEditDialog::AmZoneEditDialog(QWidget *parent, int index) :
     index(index)
 {
     ui->setupUi(this);
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &AmZoneEditDialog::save);
     setWindowModality(Qt::WindowModal);
 
     connect(ui->pushChannelBtn, &QPushButton::clicked, this, &AmZoneEditDialog::pushChannel);
