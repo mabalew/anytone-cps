@@ -227,10 +227,9 @@ void ZoneEditDialog::orderDown(){
     if(!ui->memberTableView->selectionModel()->hasSelection()) return;
     auto rows = ui->memberTableView->selectionModel()->selectedRows();
     int idx = rows.first().row();
-    if(idx == zone->channels.size() - 1) return;
-    if (idx <= 0 || idx >= static_cast<int>(member_channels.size()))
+    if (idx < 0 || idx >= static_cast<int>(member_channels.size()) - 1)
         return;
-        
+
     Anytone::Channel* ch = member_channels.at(idx);
     member_channels.erase(member_channels.begin() + idx);
     member_channels.insert(member_channels.begin() + (idx + 1), ch);

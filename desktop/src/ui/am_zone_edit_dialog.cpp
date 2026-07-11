@@ -283,8 +283,7 @@ void AmZoneEditDialog::orderDown(){
     if(!ui->memberChannelTableView->selectionModel()->hasSelection()) return;
     auto rows = ui->memberChannelTableView->selectionModel()->selectedRows();
     int idx = rows.first().row();
-    if(idx == zone->member_channels.size() - 1) return;
-    if (idx <= 0 || idx >= static_cast<int>(member_channels.size()))
+    if (idx < 0 || idx >= static_cast<int>(member_channels.size()) - 1)
         return;
         
     Anytone::AmAir* ch = member_channels.at(idx);
