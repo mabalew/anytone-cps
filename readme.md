@@ -124,12 +124,6 @@ section) is also available separately on the `fix/digital-contacts-write` branch
 
 ---
 
-## Progress
-| | D878UVII | D890UV | D168UV | D878UV | D868UV |
-| - | :-: | :-: | :-: | :-: | :-: |
-| UI | ![95%](https://progress-bar.xyz/95?width=100) | ![95%](https://progress-bar.xyz/95?width=100) | ![0%](https://progress-bar.xyz/0?width=100) | ![0%](https://progress-bar.xyz/0?width=100) | ![0%](https://progress-bar.xyz/0?width=100) |
-| Serial | ![98%](https://progress-bar.xyz/98?width=100) | ![88%](https://progress-bar.xyz/88?width=100) | ![0%](https://progress-bar.xyz/0?width=100) | ![0%](https://progress-bar.xyz/0?width=100) | ![0%](https://progress-bar.xyz/0?width=100) |
-
 ## Supported Devices
 - D878UVII
 
@@ -142,7 +136,8 @@ The stock CPS for the 878UVII:
 
 ## Planned Updates
 - Repeater Book Import
-- Expansion to other radio models (D878UV, D890UV, D168UV)
+- Get all functionality working and verified (possibly except firmware update — only one radio is
+  available for testing, unless someone donates one :))
 
 # Reporting Bugs & Requesting Features
 
@@ -160,47 +155,41 @@ The stock CPS for the 878UVII:
 
 # Feature Set
 ## Serial Data
-These are not fully tested.
-| Data | D878UVII | D890UV | D168UV |
-| - | :---: | :---: | :---: |
-| Boot Image | R/W | R/W | |
-| BK Image 1 | R/W | R/W | |
-| BK Image 2 | R/W | R/W | |
-| 2Tone Encode/Decode | R/W | | |
-| 5Tone Encode/Decode | R/W | | |
-| AES Encryption Code | R/W | R/W | |
-| AM Air | - | R/W | - |
-| AM Zone | - | R/W | - |
-| Analog Address Book | R/W | R/W | |
-| APRS | R/W | R/W | |
-| ARC4 Encryption Code | R/W | R/W | |
-| Auto Repeater Offset Frequencies | R/W | R/W | |
-| Alarm Settings | R/W | R/W | |
-| Channels | R/W | R/W | |
-| Digital Contacts | R/W | R/W | |
-| Digital Contact Whitelist | - | R/W | - |
-| DTMF Encode/Decode | R/W | | |
-| Encryption Code | R/W | R/W | |
-| Local Information/Expert Options(AT_OPTIONS) | R/W | R/W | |
-| FM Channels | R/W | R/W | |
-| GPS Roaming | R/W | R/W | |
-| HotKey HotKey | R/W | | |
-| HotKey Quick Call | R/W | | |
-| HotKey State | R/W | | |
-| Master ID | R/W | R/W | |
-| Optional Settings | R/W | R/W | |
-| Prefabricated SMS | R/W | R/W | |
-| QDC 1200 | - | | - |
-| QDC Address Book | - | | - |
-| Radio IDs | R/W | R/W | |
-| Receive Groups | R/W | R/W | |
-| Roaming Channels | R/W | R/W | |
-| Roaming Zones | R/W | R/W | |
-| Scan Lists | R/W | R/W | |
-| Talk Alias Settings | R/W | R/W | |
-| TalkGroups | R/W | R/W | |
-| Talkgroup Whitelist | - | R/W | - |
-| Zones | R/W | R/W | |
+These are not fully tested. `R/W` = read and write implemented; `R` = read only.
+| Data | D878UVII |
+| - | :---: |
+| Boot Image | R/W |
+| BK Image 1 | R/W |
+| BK Image 2 | R/W |
+| 2Tone Encode/Decode | R/W |
+| 5Tone Encode/Decode | R/W |
+| AES Encryption Code | R/W |
+| Analog Address Book | R/W |
+| APRS | R/W |
+| ARC4 Encryption Code | R/W |
+| Auto Repeater Offset Frequencies | R/W |
+| Alarm Settings | R/W |
+| Channels | R/W |
+| Digital Contacts | R/W |
+| DTMF Encode/Decode | R/W |
+| Encryption Code | R/W |
+| Local Information/Expert Options(AT_OPTIONS) | R/W |
+| FM Channels | R/W |
+| GPS Roaming | R/W |
+| HotKey HotKey | R/W |
+| HotKey Quick Call | R/W |
+| HotKey State | R/W |
+| Master ID | R/W |
+| Optional Settings | R/W |
+| Prefabricated SMS | R |
+| Radio IDs | R/W |
+| Receive Groups | R/W |
+| Roaming Channels | R/W |
+| Roaming Zones | R/W |
+| Scan Lists | R/W |
+| Talk Alias Settings | R/W |
+| TalkGroups | R/W |
+| Zones | R/W |
 
 ---
 
