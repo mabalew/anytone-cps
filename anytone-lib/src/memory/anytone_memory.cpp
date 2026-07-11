@@ -380,6 +380,10 @@ void Memory::loadData(QXmlStreamReader &xml){
             }else if(xml.name() == u"APRSSettings") {
                 Memory::instance().update1(load_count++, load_max, "Loading Data");
                 aprs_settings->load(xml);
+            }else if(xml.name() == u"MasterID") {
+                Memory::instance().update1(load_count++, load_max, "Loading Data");
+                master_radio_id->load(xml);
+                token = xml.readNext();
             }else if(xml.name() == u"AlarmSettings") {
                 Memory::instance().update1(load_count++, load_max, "Loading Data");
                 alarm_settings->load(xml);
@@ -421,7 +425,8 @@ void Memory::loadData(QXmlStreamReader &xml){
             }else if(xml.name() == u"HotKeySettings") {
                 hotkey->load(xml);
                 Memory::instance().update1(load_count++, load_max, "Loading Data");
-                token = xml.readNext();
+                // hotkey->load already leaves the reader on the next element;
+                // do not advance again or that element (e.g. MasterID) is skipped.
             }else if(xml.name() == u"OptionalSettings") {
                 Memory::instance().update1(load_count++, load_max, "Loading Data");
                 optional_settings->load(xml);
@@ -457,11 +462,13 @@ void Memory::loadData(QXmlStreamReader &xml){
             }else if(xml.name() == u"Tone2Settings") {
                 Memory::instance().update1(load_count++, load_max, "Loading Data");
                 tone2_settings->load(xml);
-                token = xml.readNext();
+                // load leaves the reader on the next element; do not advance
+                // again or that element (Tone5Settings) is skipped.
             }else if(xml.name() == u"Tone5Settings") {
                 Memory::instance().update1(load_count++, load_max, "Loading Data");
                 tone5_settings->load(xml);
-                token = xml.readNext();
+                // load leaves the reader on the next element; do not advance
+                // again or that element (ZoneList) is skipped.
             }else if(xml.name() == u"ZoneList") {
                 Memory::instance().update1(load_count++, load_max, "Loading Data");
                 loadZones(xml);
