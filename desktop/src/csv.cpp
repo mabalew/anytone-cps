@@ -560,8 +560,23 @@ void CsvList::parseRepeaterListData(){
     int slot = 0;
     int roaming_slot = 0;
     int imported = 0;
+    int updated = 0;
     int skipped = 0;
     QVector<Anytone::RoamingChannel*> new_roaming_channels;
+
+    // Re-importing an updated repeater list refreshes existing channels in
+    // place (matched by name), so nothing else in memory is touched and no
+    // duplicates are created.
+    QHash<QString, int> existing_channels;
+    for(int i = 0; i < Anytone::Memory::channels.size(); i++){
+        Anytone::Channel *c = Anytone::Memory::channels.at(i);
+        if(c->rx_frequency > 0 && !c->name.isEmpty()) existing_channels[c->name] = i;
+    }
+    QHash<QString, int> existing_roaming;
+    for(int i = 0; i < Anytone::Memory::roaming_channels.size(); i++){
+        Anytone::RoamingChannel *c = Anytone::Memory::roaming_channels.at(i);
+        if(c->rx_frequency > 0 && !c->name.isEmpty()) existing_roaming[c->name] = i;
+    }
 
     auto ctcssIndex = [](const QString &v) -> int {
         bool ok = false;
@@ -570,7 +585,13 @@ void CsvList::parseRepeaterListData(){
         return Constants::CTCSS_CODE.indexOf(QString::number(f, 'f', 1));
     };
 
-    auto nextFreeChannel = [&]() -> Anytone::Channel* {
+    auto channelForName = [&](const QString &name, bool &is_new) -> Anytone::Channel* {
+        int idx = existing_channels.value(name, -1);
+        if(idx >= 0){
+            is_new = false;
+            return Anytone::Memory::channels.at(idx);
+        }
+        is_new = true;
         while(slot < Anytone::Memory::channels.size()
               && Anytone::Memory::channels.at(slot)->rx_frequency > 0) slot++;
         if(slot >= Anytone::Memory::channels.size()){
@@ -591,8 +612,10 @@ void CsvList::parseRepeaterListData(){
         }
 
         if(is_fm){
-            Anytone::Channel *ch = nextFreeChannel();
+            bool is_new = true;
+            Anytone::Channel *ch = channelForName(data["Callsign"], is_new);
             if(!ch) break;
+            if(is_new) imported++; else updated++;
             ch->name = data["Callsign"];
             ch->setFrequencyStr(data["TX Frequency"], data["RX Frequency"]);
             ch->channel_type = 0;   // A-Analog
@@ -609,15 +632,16 @@ void CsvList::parseRepeaterListData(){
                 ch->ctcss_dcs_decode = 1;
                 ch->ctcss_decode_tone = decode_tone;
             }
-            imported++;
         }
 
         if(is_dmr){
             // The export carries no color code or slot; CC1 is the de facto
             // standard (Brandmeister). Create one channel per time slot.
             for(int ts = 1; ts <= 2; ts++){
-                Anytone::Channel *ch = nextFreeChannel();
+                bool is_new = true;
+                Anytone::Channel *ch = channelForName(data["Callsign"] + " TS" + QString::number(ts), is_new);
                 if(!ch) break;
+                if(is_new) imported++; else updated++;
                 ch->name = data["Callsign"] + " TS" + QString::number(ts);
                 ch->setFrequencyStr(data["TX Frequency"], data["RX Frequency"]);
                 ch->channel_type = 1;   // D-Digital
@@ -630,21 +654,27 @@ void CsvList::parseRepeaterListData(){
 
             // Roaming channel for the same repeater (used by the radio to
             // hop between repeaters of the network while keeping the TG).
-            while(roaming_slot < Anytone::Memory::roaming_channels.size()
-                  && Anytone::Memory::roaming_channels.at(roaming_slot)->rx_frequency > 0) roaming_slot++;
-            if(roaming_slot < Anytone::Memory::roaming_channels.size()){
-                Anytone::RoamingChannel *rc = Anytone::Memory::roaming_channels.at(roaming_slot++);
+            int existing_rc = existing_roaming.value(data["Callsign"], -1);
+            Anytone::RoamingChannel *rc = nullptr;
+            if(existing_rc >= 0){
+                rc = Anytone::Memory::roaming_channels.at(existing_rc);
+            }else{
+                while(roaming_slot < Anytone::Memory::roaming_channels.size()
+                      && Anytone::Memory::roaming_channels.at(roaming_slot)->rx_frequency > 0) roaming_slot++;
+                if(roaming_slot < Anytone::Memory::roaming_channels.size()){
+                    rc = Anytone::Memory::roaming_channels.at(roaming_slot++);
+                    new_roaming_channels.append(rc);   // only new ones get zoned
+                }else{
+                    qDebug() << "WARN: No free roaming channel slots for" << data["Callsign"];
+                }
+            }
+            if(rc != nullptr){
                 rc->name = data["Callsign"];
                 rc->rx_frequency = qRound(data["TX Frequency"].toDouble() * 100000);
                 rc->tx_frequency = qRound(data["RX Frequency"].toDouble() * 100000);
                 rc->color_code = 1;
                 rc->slot = 0;   // Slot1
-                new_roaming_channels.append(rc);
-            }else{
-                qDebug() << "WARN: No free roaming channel slots for" << data["Callsign"];
             }
-
-            imported++;
         }
     }
 
@@ -667,7 +697,8 @@ void CsvList::parseRepeaterListData(){
         }
     }
 
-    qDebug().nospace() << "Repeater list: " << imported << " imported, " << skipped << " skipped";
+    qDebug().nospace() << "Repeater list: " << imported << " channels added, " << updated
+                       << " updated, " << skipped << " repeaters skipped";
 }
 void CsvList::parseDigitalContactData(){
     qDebug() << data_list.size();
