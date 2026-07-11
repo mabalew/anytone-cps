@@ -2376,14 +2376,15 @@ void Device::writeMasterRadioIdData(){
 void Device::writePrefabSms(){
     // TODO: Implement for D168UV
     //
-    // Layout follows qdmr (which works on real D868UV/D878UV radios). The
-    // radio decides which templates exist from the *bytemap* (1 byte per
-    // message, 0x00 = present) - this CPS never wrote it before, which is why
-    // the radio showed no templates. Three structures, messages packed
-    // contiguously at ids 0..n-1:
-    //   - bytemap  (PrefabSmsBytemap): first n bytes 0x00, rest 0xff
-    //   - index    (PrefabSmsSet):     0x10 per entry, byte[3] = qdmr chain
-    //   - bodies   (PrefabSmsData):    ASCII, 8 per bank
+    // DISABLED: this writes the qdmr layout (bytemap at PrefabSmsBytemap +
+    // index at PrefabSmsSet + bodies at PrefabSmsData, contiguous ids), which
+    // matches qdmr byte-for-byte and lands on the radio correctly (verified by
+    // dumping the region), yet the radio's own template menu still shows
+    // nothing. Until that last gap is understood (needs a dump of a list
+    // written by the stock CPS), keep this a no-op so an "Other Data" write
+    // never touches the SMS region.
+    return;
+
     const auto* map = Anytone::Memory::Map();
     if (!map) return;
     if (map->PrefabSmsBytemap == 0) return; // model without a known layout
