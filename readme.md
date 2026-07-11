@@ -107,7 +107,20 @@ section) is also available separately on the `fix/digital-contacts-write` branch
 - Each DMR repeater also gets a **roaming channel** (CC1, Slot1), grouped into `Roaming 1..N`
   roaming zones (64 channels each, the codeplug limit), so network roaming works out of the box.
   Also fixed the Roaming Channel view showing the TX frequency in the RX column.
-- Imported channels fill the first free channel slots.
+- Imported channels fill the first free channel slots. **Re-importing an updated list matches
+  channels and roaming channels by name and refreshes them in place** — no duplicates and nothing
+  else in the codeplug is touched, so the safe workflow is: read from radio, import, write (no
+  need to start from an empty codeplug).
+
+### Settings persistence and editor fixes
+- Several settings dialogs never wrote their edits back: **Master ID** and **Hotkey** had a
+  `save()` method that was never called, and the **AES code**, **analog address book**, **GPS
+  roaming** and **AM zone** editors only saved on prev/next navigation, so the entry shown when
+  OK was pressed was lost. All are now saved on OK.
+- The **APRS settings** dialog had no save path at all (~90 fields were displayed but never
+  written back); a full `save()` was added and wired to OK.
+- The **Down** button in the Zone, AM Zone, Scan List and Roaming Zone member editors never moved
+  the top entry down (it kept the `Up` handler's guard); fixed in all four.
 
 ---
 
