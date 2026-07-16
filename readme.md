@@ -6,8 +6,9 @@
 
 > **This is a fork** of [xbenkozx/anytone-cps](https://github.com/xbenkozx/anytone-cps) with a series of
 > bug fixes for reading/writing the radio, digital contact and talk group handling, and CSV imports.
-> See [Changes in this fork](#changes-in-this-fork) below. All credit for the original project goes to
-> its author.
+> It also aggregates community pull requests that were left unmerged upstream (see
+> [Community fixes](#community-fixes)). See [Changes in this fork](#changes-in-this-fork) below.
+> All credit for the original project goes to its author, and for the community fixes to their authors.
 
 An open-source, cross-platform Customer Programming Software (CPS) for the AnyTone 878UVII series radios, written in c++.
 
@@ -121,6 +122,16 @@ section) is also available separately on the `fix/digital-contacts-write` branch
   written back); a full `save()` was added and wired to OK.
 - The **Down** button in the Zone, AM Zone, Scan List and Roaming Zone member editors never moved
   the top entry down (it kept the `Up` handler's guard); fixed in all four.
+
+### Community fixes
+This fork also carries pull requests that were left unmerged on the upstream project. All credit
+goes to their authors; they are included here (with authorship preserved) so users get them in one
+place:
+- Fix a segfault when editing a channel (uninitialized pointers) — [@Serphentas](https://github.com/Serphentas), upstream PR #1
+- Copying a channel no longer cuts it — [@Serphentas](https://github.com/Serphentas), upstream PR #2
+- Retry logic for the satellite (Keplerian) data download — [@Serphentas](https://github.com/Serphentas), upstream PR #3
+- Working Save / Exit / About menu actions and zone-dialog channel headers — [@Serphentas](https://github.com/Serphentas), upstream PR #4
+- Correct Bluetooth options for the D890UV — [@Serphentas](https://github.com/Serphentas), upstream PR #5
 
 ---
 
