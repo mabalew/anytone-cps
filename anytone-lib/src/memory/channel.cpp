@@ -228,7 +228,7 @@ void Anytone::Channel::decode_D878UVII(QByteArray data){
     dcs_decode_tone = Int::fromBytes(data.mid(0xe, 2));
     custom_ctcss = Int::fromBytes(data.mid(0x10, 2));
     tone2_decode = static_cast<uint8_t>(data.at(0x12));
-    contact_idx = Int::fromBytes(data.mid(0x13, 2), Endian::Big);
+    contact_idx = Int::fromBytes(data.mid(0x14, 4)); // uint32 little-endian at 0x14
     radio_id_idx = static_cast<uint8_t>(data.at(0x18));
     squelch_mode = (static_cast<uint8_t>(data.at(0x19)) >> 4) & 0x3;
     ptt_id = (static_cast<uint8_t>(data.at(0x19))) & 0x3;
@@ -410,8 +410,9 @@ QByteArray Anytone::Channel::encode_D878UVII(){
     );
 
     bytes[18] = tone2_decode;
-    data.replace(19, 2, 
-        Int::toBytes(contact_idx, 2, Endian::Big)
+    // Transmit contact index: uint32 little-endian at 0x14
+    data.replace(0x14, 4,
+        Int::toBytes(contact_idx, 4)
     );
 
     data[24] = radio_id_idx;
